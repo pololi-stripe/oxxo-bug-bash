@@ -4,6 +4,8 @@ import "./App.css";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, ElementsConsumer } from "@stripe/react-stripe-js";
 
+import { createPaymentIntent } from "./helper";
+
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY, {
   betas: ["oxxo_pm_beta_1"],
   apiVersion: "2020-03-02; oxxo_beta=v2",
@@ -21,41 +23,47 @@ export class OxxoDemo extends React.Component {
     };
   }
 
-  createPaymentIntent = async () => {
-    const option = {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+  getPendingToPay = () => {
+    const paymentIntentData = {
+      amount: 2000,
+      currency: "mxn",
+      payment_method_types: ["oxxo"],
     };
-
-    const res = await fetch("/payment-intent", option);
-    const data = res.json();
-    return data;
-  };
-
-  getPendingToPay = async () => {
     const { stripe } = this.props;
 
-    const data = await this.createPaymentIntent();
-    const result = await stripe.confirmOxxoPayment(data.client_secret, {
-      payment_method: {
-        billing_details: {
-          name: "Bug Bash",
-          email: "Bug@bash.com",
-        },
-      },
-    });
+    return createPaymentIntent(paymentIntentData).then(({ object, error }) => {
+      if (error) {
+        this.setState({ error: error });
+        return;
+      }
 
-    if (result.error) {
-      this.setState({
-        error: result.error.message,
-        clientSecret: data.client_secret,
-      });
-    } else {
-      this.setState({
-        clientSecret: data.client_secret,
-        oxxoDetails: result.paymentIntent.next_action.display_oxxo_details,
-      });
-    }
+      console.log(object);
+      const { client_secret } = object;
+
+      return stripe
+        .confirmOxxoPayment(object.client_secret, {
+          payment_method: {
+            billing_details: {
+              name: "Bug Bash",
+              email: "Bug@bash.com",
+            },
+          },
+        })
+        .then((result) => {
+          if (result.error) {
+            this.setState({
+              clientSecret: client_secret,
+              error: result.error.message,
+            });
+          } else {
+            this.setState({
+              clientSecret: client_secret,
+              oxxoDetails:
+                result.paymentIntent.next_action.display_oxxo_details,
+            });
+          }
+        });
+    });
   };
 
   render() {
