@@ -2,6 +2,7 @@
 
 ## How to start
 
+0. run `./doctor.rb` to make sure environment is set up.
 1. `yarn install`
 2. update `.env` to assign values to `REACT_APP_STRIPE_SECRET_KEY` and `REACT_APP_STRIPE_PUBLIC_KEY`
 3. In one tab: `yarn start`
