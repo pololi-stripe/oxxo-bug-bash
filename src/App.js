@@ -134,7 +134,7 @@ export class OxxoDemo extends React.Component {
                 variant="primary"
                 onClick={() => this.getOxxo(PENDING_TO_PAY)}
               >
-                Go somewhere
+                Get Pending To Pay OXXO
               </Button>
             </Card.Body>
           </Card>
